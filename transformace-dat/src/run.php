@@ -65,7 +65,7 @@ foreach (json_decode(download($url)) as $profile) {
 				'CisloVerze' => $dokument->cislo_verze->Value,
 			);
 		}
-		
+
 		$result->Dodavatele = array();
 		foreach ($zakazka->dodavatel as $dodavatel) {
 			// TODO: Add $zakazka->VZ->cast_zakazky[]->dodavatel if available.
@@ -74,9 +74,10 @@ foreach (json_decode(download($url)) as $profile) {
 				'Jmeno' => $dodavatel->nazev_dodavatele->Value,
 			);
 		}
-		
+
 		preg_match('~^https?://([^/]+)~', $profile->url, $match);
 		list(, $domain) = $match;
+		/** @var DOMDocument $dom */
 		$dom = downloadHtml($profile->url);
 		if (preg_match('~\bE-ZAK\b~', (new DOMXPath($dom))->evaluate("string(//title)"))) {
 			$handlers[$domain] = 'ezak';
@@ -94,8 +95,12 @@ foreach (json_decode(download($url)) as $profile) {
 			CPV
 			*/
 			$handlers[$domain]($result, $profile);
-		}
-		echo uploadJson("https://www.hlidacstatu.cz/Api/v1/VZDetail?id=$result->EvidencniCisloZakazky", $result);
-		exit;
+			echo sprintf('Parsed something from "%s"' . PHP_EOL, $domain);
+		} else {
+		    file_put_contents(__DIR__ . '/example-' . $domain . '.html' , $dom->saveHTML());
+		    //die(sprintf('Missing domain handler "%s"' . PHP_EOL, $domain));
+        }
+		//echo uploadJson("https://www.hlidacstatu.cz/Api/v1/VZDetail?id=$result->EvidencniCisloZakazky", $result);
+		//exit;
 	}
 }
